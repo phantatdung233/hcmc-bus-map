@@ -24,8 +24,33 @@ const emptyState = (): StoreState => ({
   tickets: [],
 });
 
+// Global in-memory store for Vercel/serverless environments
+let globalMemoryStore: StoreState | null = null;
+
+const canWriteFilesystem = (): boolean => {
+  try {
+    if (process.env.VERCEL) {
+      return false;
+    }
+    fs.accessSync(path.dirname(STORE_FILE), fs.constants.W_OK);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
 const saveState = (state: StoreState) => {
-  fs.writeFileSync(STORE_FILE, JSON.stringify(state, null, 2), "utf8");
+  if (canWriteFilesystem()) {
+    try {
+      fs.writeFileSync(STORE_FILE, JSON.stringify(state, null, 2), "utf8");
+    } catch {
+      // Fallback to memory if write fails
+      globalMemoryStore = state;
+    }
+  } else {
+    // Store in memory for Vercel
+    globalMemoryStore = state;
+  }
 };
 
 const ensureSeed = (state: StoreState): StoreState => {
@@ -53,29 +78,34 @@ const ensureSeed = (state: StoreState): StoreState => {
 };
 
 const readState = (): StoreState => {
-  try {
-    if (!fs.existsSync(STORE_FILE)) {
-      const state = ensureSeed(emptyState());
-      saveState(state);
-      return state;
-    }
-
-    const raw = fs.readFileSync(STORE_FILE, "utf8");
-    const parsed = JSON.parse(raw) as Partial<StoreState>;
-    const state: StoreState = {
-      users: parsed.users ?? [],
-      wallets: parsed.wallets ?? [],
-      transactions: parsed.transactions ?? [],
-      topupOrders: parsed.topupOrders ?? [],
-      tickets: parsed.tickets ?? [],
-    };
-
-    return ensureSeed(state);
-  } catch {
-    const state = ensureSeed(emptyState());
-    saveState(state);
-    return state;
+  // Check memory store first (for Vercel)
+  if (globalMemoryStore) {
+    return { ...globalMemoryStore };
   }
+
+  // Try to read from filesystem
+  try {
+    if (canWriteFilesystem() && fs.existsSync(STORE_FILE)) {
+      const raw = fs.readFileSync(STORE_FILE, "utf8");
+      const parsed = JSON.parse(raw) as Partial<StoreState>;
+      const state: StoreState = {
+        users: parsed.users ?? [],
+        wallets: parsed.wallets ?? [],
+        transactions: parsed.transactions ?? [],
+        topupOrders: parsed.topupOrders ?? [],
+        tickets: parsed.tickets ?? [],
+      };
+
+      return ensureSeed(state);
+    }
+  } catch {
+    // Fall through to create new state
+  }
+
+  // Create new state
+  const state = ensureSeed(emptyState());
+  saveState(state);
+  return state;
 };
 
 const ensureWallet = (state: StoreState, userId: string): Wallet => {
