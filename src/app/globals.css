@@ -1,0 +1,251 @@
+@import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+:root {
+  --background: #f7f5ef;
+  --foreground: #122118;
+  --surface: #ffffff;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-body);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body), sans-serif;
+}
+
+@keyframes floatGlow {
+  0%,
+  100% {
+    transform: translateY(0px);
+    opacity: 0.7;
+  }
+
+  50% {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes softPop {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulseRing {
+  0% {
+    box-shadow: 0 0 0 0 rgba(46, 149, 116, 0.26);
+  }
+
+  100% {
+    box-shadow: 0 0 0 10px rgba(46, 149, 116, 0);
+  }
+}
+
+.anim-fade-up {
+  animation: fadeUp 0.36s ease-out both;
+}
+
+.anim-soft-pop {
+  animation: softPop 0.24s ease-out both;
+}
+
+.anim-float {
+  animation: floatGlow 6s ease-in-out infinite;
+}
+
+.anim-delay-1 {
+  animation-delay: 90ms;
+}
+
+.anim-delay-2 {
+  animation-delay: 150ms;
+}
+
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(15, 49, 35, 0.15);
+}
+
+.pulse-ring {
+  animation: pulseRing 1.7s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade-up,
+  .anim-soft-pop,
+  .anim-float,
+  .pulse-ring {
+    animation: none !important;
+  }
+
+  .hover-lift,
+  .hover-lift:hover {
+    transition: none !important;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading), sans-serif;
+}
+
+.leaflet-container {
+  background: #f3f4f6; /* Lighter neutral for light maps */
+  font-family: var(--font-body), sans-serif;
+}
+
+.leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  border: 1px solid #dce7e1;
+  box-shadow: 0 10px 24px rgba(17, 43, 31, 0.16);
+}
+
+.leaflet-popup-content {
+  margin: 10px 12px;
+}
+
+.leaflet-popup-tip {
+  background: #ffffff;
+}
+
+.station-tooltip {
+  margin: 0;
+}
+
+.station-tooltip .leaflet-tooltip {
+  border: 1px solid #dae6df;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 10px 22px rgba(18, 44, 32, 0.16);
+  color: #173428;
+  padding: 8px 10px;
+  max-width: 240px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.35;
+  animation: softPop 0.18s ease-out;
+}
+
+.station-tooltip .leaflet-tooltip:before {
+  border-top-color: #ffffff;
+}
+
+.leaflet-control-attribution {
+  font-size: 10px;
+}
+
+/* Custom Minimal Marker styles */
+.bus-marker-icon {
+  background-color: transparent !important;
+  border: none !important;
+}
+
+.bus-marker-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: radial-gradient(circle at 30% 30%, #37b892 0%, #128c66 62%, #0d6b4f 100%);
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  box-shadow:
+    0 8px 18px rgba(15, 107, 79, 0.34),
+    0 0 0 2px rgba(255, 255, 255, 0.35);
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.bus-marker-glyph {
+  width: 12px;
+  height: 12px;
+  fill: #ffffff;
+}
+
+.bus-marker-icon:hover .bus-marker-pin {
+  transform: scale(1.08);
+  box-shadow:
+    0 12px 24px rgba(15, 107, 79, 0.42),
+    0 0 0 2px rgba(255, 255, 255, 0.45);
+}
+
+.bus-marker-icon.leaflet-interactive {
+  transition: transform 0.15s ease;
+}
+
+.bus-marker-icon.leaflet-interactive:hover {
+  transform: translateY(-1px);
+}
+
+.clean-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #abc3b6 #f5faf7;
+}
+
+.clean-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.clean-scrollbar::-webkit-scrollbar-track {
+  background: #f5faf7;
+  border-radius: 999px;
+}
+
+.clean-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #c0d3c9 0%, #9db8aa 100%);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+  border-radius: 999px;
+}
+
+.clean-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #aec7ba 0%, #8ba898 100%);
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+.leaflet-container {
+  background: linear-gradient(180deg, #f3f4f6 0%, #e5e7eb 100%);
+  font-family: var(--font-body), sans-serif;
+}
