@@ -6,6 +6,7 @@ import { Ticket, Bus, QrCode, Wallet } from "lucide-react";
 
 import MvpNav from "@/components/mvp/MvpNav";
 import { getStoredUserId, mvpRequest } from "@/lib/mvp-client";
+import { useWalletBalance } from "@/hooks/useWalletBalance";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +26,7 @@ export default function BuyTicketPage() {
   const [userId, setUserId] = useState("");
   const [routeId, setRouteId] = useState(1);
   const [price, setPrice] = useState(7000);
-  const [balance, setBalance] = useState<number | null>(null);
+  const { balance, refetch: refetchBalance } = useWalletBalance(userId || undefined);
   const [message, setMessage] = useState("Chọn tuyến và thanh toán vé bằng số dư ví.");
   const [lastTicket, setLastTicket] = useState<TicketInfo | null>(null);
 
@@ -38,19 +39,6 @@ export default function BuyTicketPage() {
 
     setUserId(stored);
   }, [router]);
-
-  const loadBalance = async (uid: string) => {
-    const result = await mvpRequest<{ balance: number }>("/api/wallet/balance", undefined, uid);
-    setBalance(result.balance);
-  };
-
-  useEffect(() => {
-    if (!userId) {
-      return;
-    }
-
-    loadBalance(userId).catch(() => setBalance(null));
-  }, [userId]);
 
   const onBuy = async () => {
     if (!userId) {
@@ -70,7 +58,7 @@ export default function BuyTicketPage() {
       );
 
       setLastTicket(result.ticket);
-      await loadBalance(userId);
+      await refetchBalance();
       setMessage("Mua vé thành công!");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Mua vé thất bại");

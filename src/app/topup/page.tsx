@@ -7,6 +7,7 @@ import { QRCodeCanvas } from "qrcode.react";
 
 import MvpNav from "@/components/mvp/MvpNav";
 import { getStoredUserId, mvpRequest } from "@/lib/mvp-client";
+import { useWalletBalance } from "@/hooks/useWalletBalance";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,7 @@ export default function TopupPage() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
   const [amount, setAmount] = useState(50000);
-  const [balance, setBalance] = useState<number | null>(null);
+  const { balance, isLoading: balanceLoading, refetch: refetchBalance } = useWalletBalance(userId || undefined);
   const [order, setOrder] = useState<TopupOrder | null>(null);
   const [message, setMessage] = useState("Tạo lệnh nạp tiền để hiển thị QR thanh toán.");
   const qrRef = useRef<HTMLDivElement>(null);
@@ -36,17 +37,27 @@ export default function TopupPage() {
     }
 
     setUserId(stored);
+
+    // Load persisted order from localStorage
+    if (typeof window !== "undefined") {
+      const savedOrder = localStorage.getItem(`topup_order_${stored}`);
+      if (savedOrder) {
+        try {
+          const parsedOrder = JSON.parse(savedOrder);
+          setOrder(parsedOrder);
+        } catch {
+          // Ignore parse error
+        }
+      }
+    }
   }, [router]);
 
+  // Persist order to localStorage whenever it changes
   useEffect(() => {
-    if (!userId) {
-      return;
+    if (typeof window !== "undefined" && userId && order) {
+      localStorage.setItem(`topup_order_${userId}`, JSON.stringify(order));
     }
-
-    mvpRequest<{ balance: number }>("/api/wallet/balance", undefined, userId)
-      .then((result) => setBalance(result.balance))
-      .catch(() => setBalance(null));
-  }, [userId]);
+  }, [order, userId]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -65,10 +76,10 @@ export default function TopupPage() {
         });
         // Refresh balance
         if (userId) {
-          mvpRequest<{ balance: number }>("/api/wallet/balance", undefined, userId)
-            .then((result) => setBalance(result.balance))
-            .catch(() => setBalance(null));
+          refetchBalance();
         }
+        // Clear persisted order from localStorage
+        localStorage.removeItem(`topup_order_${userId}`);
         // Clear URL parameters
         window.history.replaceState({}, document.title, window.location.pathname);
       }

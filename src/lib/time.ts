@@ -31,12 +31,6 @@ export const getNextDepartures = (timeTable: number[], nowSeconds: number, count
 
   const sameDay = timeTable.filter((value) => value >= nowSeconds).slice(0, count);
 
-  if (sameDay.length === count) {
-    return sameDay.map((value) => toClockTime(value));
-  }
-
-  const remaining = count - sameDay.length;
-  const nextDay = timeTable.slice(0, remaining).map((value) => `${toClockTime(value)} (+1d)`);
-
-  return [...sameDay.map((value) => toClockTime(value)), ...nextDay];
+  // Only return departures for today, no next day departures
+  return sameDay.map((value) => toClockTime(value));
 };

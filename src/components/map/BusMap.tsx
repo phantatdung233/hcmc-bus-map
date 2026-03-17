@@ -58,7 +58,7 @@ const userLocationIcon = L.divIcon({
 
 const HCMC_CENTER: [number, number] = [10.762622, 106.660172];
 const DEFAULT_ZOOM = 17;
-const MIN_MARKER_ZOOM = 17;
+const MIN_MARKER_ZOOM = 16;
 const FOCUS_ZOOM = 17;
 const MAX_VISIBLE_MARKERS = 450;
 
@@ -264,47 +264,101 @@ function RouteItineraryDiagram({
   return (
     <div
       className={cn(
-        "rounded-2xl border bg-linear-to-b to-white p-4 shadow-sm",
-        isBlue ? "border-blue-100 from-blue-50/50" : "border-amber-100 from-amber-50/50",
+        "rounded-2xl border p-1 shadow-sm overflow-hidden flex flex-col",
+        isBlue ? "border-blue-100/60 bg-blue-50/20" : "border-amber-100/60 bg-amber-50/20",
       )}
     >
-      <p
+      <div
         className={cn(
-          "mb-4 flex items-center gap-2 text-[15px] font-bold",
-          isBlue ? "text-blue-900" : "text-amber-900",
+          "px-4 py-3 border-b flex items-center justify-between",
+          isBlue ? "border-blue-100/50 bg-blue-50/50" : "border-amber-100/50 bg-amber-50/50",
         )}
       >
-        <div className={cn("rounded p-1", isBlue ? "bg-blue-100 text-blue-600" : "bg-amber-100 text-amber-600")}>
-          <Bus className="size-3.5" />
-        </div>
-        {title}
-      </p>
-      <div className="overflow-x-auto [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-track]:bg-slate-100/30 [&::-webkit-scrollbar-thumb]:bg-slate-300/50 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400/50">
-        <div className="flex gap-2 min-w-min pb-2">
-          {stationList.map((station, index) => (
-            <div key={`${station.StationId}-${index}`} className="flex flex-col items-center min-w-max">
-              {/* Station info */}
-              <div className="flex-1 min-h-0 mb-2 text-center px-2">
-                <p className="text-xs font-semibold text-slate-800 line-clamp-3">{station.StationName}</p>
-                <p className="text-[10px] text-slate-500 line-clamp-2">{station.Address}</p>
-              </div>
-              {/* Timeline dot */}
-              <div className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    "w-3 h-3 rounded-full border-2 shadow-sm shrink-0",
-                    isBlue ? "bg-blue-500 border-blue-400" : "bg-amber-500 border-amber-400",
-                  )}
-                />
-                {index < stationList.length - 1 && (
-                  <div className={cn("w-9 h-0.5", isBlue ? "bg-blue-400" : "bg-amber-400")} />
-                )}
-              </div>
-            </div>
-          ))}
+        <p className={cn("flex items-center gap-2 text-[14px] font-bold", isBlue ? "text-blue-900" : "text-amber-900")}>
+          <span
+            className={cn("rounded-md p-1.5", isBlue ? "bg-blue-100 text-blue-600" : "bg-amber-100 text-amber-600")}
+          >
+            <Bus className="size-4" />
+          </span>
+          {title}
+        </p>
+        <span
+          className={cn(
+            "text-xs font-semibold px-2 py-1 rounded-full",
+            isBlue ? "bg-blue-100/80 text-blue-700" : "bg-amber-100/80 text-amber-700",
+          )}
+        >
+          {stationList.length} trạm
+        </span>
+      </div>
+
+      <div className="max-h-[360px] overflow-y-auto px-2 py-3 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-slate-300/50 [&::-webkit-scrollbar-thumb]:rounded-full hover:[&::-webkit-scrollbar-thumb]:bg-slate-400/50 overscroll-contain">
+        <div className="relative">
+          {/* Continuous vertical line */}
+          <div
+            className={cn(
+              "absolute left-[15px] top-[24px] bottom-[24px] w-[2px] rounded-full",
+              isBlue ? "bg-blue-200/80" : "bg-amber-200/80",
+            )}
+          />
+
+          <div className="space-y-1">
+            {stationList.map((station, index) => {
+              const isFirst = index === 0;
+              const isLast = index === stationList.length - 1;
+              const isEndpoint = isFirst || isLast;
+
+              return (
+                <div key={`${station.StationId}-${index}`} className="flex gap-3 relative z-10 group items-start">
+                  <div className="flex flex-col items-center justify-center w-8 shrink-0 pt-[14px]">
+                    <div
+                      className={cn(
+                        "rounded-full z-10 shadow-sm transition-all duration-300 group-hover:scale-[1.3] ring-4 ring-transparent group-hover:ring-white",
+                        isEndpoint
+                          ? isBlue
+                            ? "w-3.5 h-3.5 bg-blue-600 ring-[3px] ring-blue-100"
+                            : "w-3.5 h-3.5 bg-amber-600 ring-[3px] ring-amber-100"
+                          : isBlue
+                            ? "w-2.5 h-2.5 bg-white border-[2.5px] border-blue-400"
+                            : "w-2.5 h-2.5 bg-white border-[2.5px] border-amber-400",
+                      )}
+                    />
+                  </div>
+
+                  <div
+                    className={cn(
+                      "flex-1 min-w-0 rounded-xl px-3 py-2.5 border transition-all duration-200 cursor-pointer",
+                      isEndpoint
+                        ? isBlue
+                          ? "bg-blue-50/50 border-blue-100 hover:bg-white hover:border-blue-200 hover:shadow-sm"
+                          : "bg-amber-50/50 border-amber-100 hover:bg-white hover:border-amber-200 hover:shadow-sm"
+                        : "bg-transparent border-transparent hover:bg-white hover:border-slate-200 hover:shadow-sm",
+                    )}
+                  >
+                    <p
+                      className={cn(
+                        "text-[13px] font-semibold leading-snug transition-colors",
+                        isEndpoint
+                          ? isBlue
+                            ? "text-blue-800"
+                            : "text-amber-800"
+                          : "text-slate-700 group-hover:text-blue-600",
+                      )}
+                    >
+                      {station.StationName}
+                    </p>
+                    {station.Address && (
+                      <p className="text-[11px] text-slate-500 mt-1 line-clamp-1 group-hover:line-clamp-none transition-all">
+                        {station.Address}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
-      <p className="text-xs text-slate-400 mt-3 pt-3 border-t border-slate-200/50">Tổng {stationList.length} trạm</p>
     </div>
   );
 }
@@ -796,7 +850,9 @@ export default function BusMap() {
   const onSelectRoute = (route: StationRouteView, trackRecent = false) => {
     setSelectedStation(null);
     setSelectedRoute(route);
-    setIsRoutePanelCollapsed(true);
+    // On mobile (md breakpoint is 768px), collapse by default. On desktop, expand.
+    const isMobile = typeof window !== "undefined" && window.innerWidth < 768;
+    setIsRoutePanelCollapsed(isMobile);
     setIsSearchCollapsed(true);
 
     if (trackRecent) {
@@ -820,24 +876,30 @@ export default function BusMap() {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-slate-50">
-      {isSearchCollapsed && !selectedStation && !selectedRoute ? (
-        <Button
-          aria-label="Mở tìm kiếm"
-          className="absolute left-4 top-4 h-12 w-12 rounded-full shadow-lg bg-white hover:bg-slate-50 text-slate-700 border-none"
-          onClick={() => setIsSearchCollapsed(false)}
-          size="icon"
-          type="button"
-          variant="outline"
-          style={{ zIndex: 1300 }}
-        >
-          <Search className="size-5" />
-        </Button>
-      ) : null}
+      <Button
+        aria-label="Mở tìm kiếm"
+        className={cn(
+          "absolute left-4 top-4 h-12 w-12 rounded-full shadow-lg bg-white hover:bg-slate-50 text-slate-700 border-none transition-all duration-300",
+          !isSearchCollapsed || selectedStation || selectedRoute
+            ? "opacity-0 scale-75 pointer-events-none"
+            : "opacity-100 scale-100",
+        )}
+        onClick={() => setIsSearchCollapsed(false)}
+        size="icon"
+        type="button"
+        variant="outline"
+        style={{ zIndex: 1300 }}
+      >
+        <Search className="size-5" />
+      </Button>
 
-      <div className="absolute right-4 top-4 z-[1300] flex flex-col items-end">
+      <div className="absolute right-4 top-4 z-[900] flex flex-col items-end">
         <Button
           aria-label="Tài khoản & Thanh toán"
-          className="h-12 w-12 rounded-full shadow-lg bg-white hover:bg-slate-50 text-[#2f5a46] border-none"
+          className={cn(
+            "h-12 w-12 rounded-full shadow-lg bg-white hover:bg-slate-50 text-[#2f5a46] border-none transition-all duration-300",
+            isWalletOpen ? "scale-105 shadow-md bg-slate-50" : "scale-100",
+          )}
           onClick={() => setIsWalletOpen(!isWalletOpen)}
           size="icon"
           type="button"
@@ -846,69 +908,76 @@ export default function BusMap() {
           <Wallet className="size-5" />
         </Button>
 
-        {isWalletOpen && (
-          <Card className="mt-2 w-72 rounded-2xl shadow-xl border-[#d6e4dc] bg-white overflow-hidden origin-top-right animate-in fade-in zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out data-[state=closed]:zoom-out-95 duration-200">
-            {walletUserId ? (
-              <>
-                <CardHeader className="bg-[#2f5a46]/5 pb-3">
-                  <CardTitle className="text-sm font-semibold text-slate-800">Ví thanh toán</CardTitle>
-                  <CardDescription className="text-xs">ID: {walletUserId}</CardDescription>
-                </CardHeader>
-                <CardContent className="p-4 pt-3 flex flex-col gap-3">
-                  <div>
-                    <p className="text-xs text-slate-500 uppercase tracking-wide">Số dư khả dụng</p>
-                    <p className="text-xl font-bold text-[#2f5a46]">
-                      {walletBalance === null ? "..." : `${walletBalance.toLocaleString("vi-VN")} đ`}
-                    </p>
-                  </div>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      className="flex-1 bg-[#2f5a46] hover:bg-[#1f4231] text-white rounded-xl"
-                      onClick={() => (window.location.href = "/wallet")}
-                    >
-                      Đến ví
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="flex-1 border-[#2f5a46] text-[#2f5a46] rounded-xl hover:bg-[#f7f5ef]"
-                      onClick={() => (window.location.href = "/topup")}
-                    >
-                      Nạp tiền
-                    </Button>
-                  </div>
-                </CardContent>
-              </>
-            ) : (
-              <CardContent className="p-4 flex flex-col items-center text-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-1">
-                  <Wallet className="size-5" />
-                </div>
+        <Card
+          className={cn(
+            "absolute top-[56px] right-0 w-72 rounded-2xl shadow-xl border-[#d6e4dc] bg-white overflow-hidden origin-top-right transition-all duration-300",
+            isWalletOpen
+              ? "opacity-100 scale-100 translate-y-0 visible"
+              : "opacity-0 scale-95 -translate-y-2 invisible pointer-events-none",
+          )}
+        >
+          {walletUserId ? (
+            <>
+              <CardHeader className="bg-[#2f5a46]/5 pb-3">
+                <CardTitle className="text-sm font-semibold text-slate-800">Ví thanh toán</CardTitle>
+                <CardDescription className="text-xs">ID: {walletUserId}</CardDescription>
+              </CardHeader>
+              <CardContent className="p-4 pt-3 flex flex-col gap-3">
                 <div>
-                  <p className="font-semibold text-slate-800 text-sm">Bạn chưa đăng nhập</p>
-                  <p className="text-xs text-slate-500 mt-1">
-                    Đăng nhập để sử dụng tính năng nạp tiền và mua vé xe buýt
+                  <p className="text-xs text-slate-500 uppercase tracking-wide">Số dư khả dụng</p>
+                  <p className="text-xl font-bold text-[#2f5a46]">
+                    {walletBalance === null ? "..." : `${walletBalance.toLocaleString("vi-VN")} đ`}
                   </p>
                 </div>
-                <Button
-                  size="sm"
-                  className="w-full bg-[#2f5a46] hover:bg-[#1f4231] text-white rounded-xl mt-1"
-                  onClick={() => (window.location.href = "/account")}
-                >
-                  Đăng nhập
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="flex-1 bg-[#2f5a46] hover:bg-[#1f4231] text-white rounded-xl"
+                    onClick={() => (window.location.href = "/wallet")}
+                  >
+                    Đến ví
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 border-[#2f5a46] text-[#2f5a46] rounded-xl hover:bg-[#f7f5ef]"
+                    onClick={() => (window.location.href = "/topup")}
+                  >
+                    Nạp tiền
+                  </Button>
+                </div>
               </CardContent>
-            )}
-          </Card>
-        )}
+            </>
+          ) : (
+            <CardContent className="p-4 flex flex-col items-center text-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 mb-1">
+                <Wallet className="size-5" />
+              </div>
+              <div>
+                <p className="font-semibold text-slate-800 text-sm">Bạn chưa đăng nhập</p>
+                <p className="text-xs text-slate-500 mt-1">Đăng nhập để sử dụng tính năng nạp tiền và mua vé xe buýt</p>
+              </div>
+              <Button
+                size="sm"
+                className="w-full bg-[#2f5a46] hover:bg-[#1f4231] text-white rounded-xl mt-1"
+                onClick={() => (window.location.href = "/account")}
+              >
+                Đăng nhập
+              </Button>
+            </CardContent>
+          )}
+        </Card>
       </div>
 
       <Card
         className={cn(
-          "absolute left-3 right-3 top-3 flex flex-col max-h-[70vh] border-slate-200/60 bg-white/80 backdrop-blur-xl shadow-xl md:left-5 md:right-auto md:w-104 md:top-5 md:max-h-[90vh] transition-all duration-300 rounded-3xl",
-          isSearchCollapsed ? "hidden" : "flex",
-          (selectedStation || selectedRoute) && !isSearchCollapsed ? "hidden md:flex" : "",
+          "absolute left-3 right-3 top-3 flex flex-col max-h-[70vh] border-slate-200/60 bg-white/80 backdrop-blur-xl shadow-xl md:left-5 md:right-auto md:w-104 md:top-5 md:max-h-[90vh] transition-all duration-300 rounded-3xl origin-top-left",
+          isSearchCollapsed
+            ? "opacity-0 scale-95 pointer-events-none -translate-x-2 -translate-y-4 invisible"
+            : "opacity-100 scale-100 translate-x-0 translate-y-2 visible",
+          (selectedStation || selectedRoute) && !isSearchCollapsed
+            ? "invisible md:visible opacity-0 md:opacity-100 scale-95 md:scale-100 md:translate-y-0"
+            : "",
         )}
         style={{ zIndex: 1000 }}
       >
@@ -1232,7 +1301,7 @@ export default function BusMap() {
 
       <div
         className={cn(
-          "absolute right-3 bottom-20 flex flex-col gap-3 md:bottom-5 md:right-5 transition-all duration-300",
+          "absolute right-3 bottom-5 flex flex-col gap-3 md:bottom-5 md:right-5 transition-all duration-300",
           selectedStation || (selectedRoute && !isRoutePanelCollapsed) ? "hidden md:flex" : "flex",
         )}
         style={{
@@ -1356,10 +1425,10 @@ export default function BusMap() {
           />
 
           <Card
-            className="absolute bottom-0 left-0 right-0 max-h-[60vh] overflow-y-auto rounded-t-3xl border-0 bg-white/95 shadow-2xl backdrop-blur-xl pb-[calc(env(safe-area-inset-bottom)+16px)] md:left-5 md:right-auto md:top-5 md:max-h-[calc(100vh-2.5rem)] md:w-md md:rounded-3xl md:pb-0"
+            className="absolute bottom-0 left-0 right-0 h-screen md:h-auto md:max-h-[calc(100vh-2.5rem)] overflow-y-auto rounded-t-3xl border-0 bg-white/95 shadow-2xl backdrop-blur-xl pb-[calc(env(safe-area-inset-bottom)+16px)] md:left-5 md:right-auto md:top-5 md:w-md md:rounded-3xl md:pb-0 overscroll-contain"
             style={{ zIndex: 1100 }}
           >
-            <CardHeader className="sticky top-0 z-10 border-b border-slate-100 bg-white/90 backdrop-blur-xl px-6 py-5">
+            <CardHeader className="sticky top-0 z-20 border-b border-slate-100 bg-white/90 backdrop-blur-xl px-6 py-5">
               <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-200 md:hidden" />
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1">
@@ -1522,10 +1591,10 @@ export default function BusMap() {
                 type="button"
               />
               <Card
-                className="absolute bottom-0 left-0 right-0 max-h-[60vh] overflow-y-auto rounded-t-3xl border-0 bg-white/95 shadow-2xl backdrop-blur-xl pb-[calc(env(safe-area-inset-bottom)+16px)] md:bottom-auto md:left-5 md:right-auto md:top-5 md:max-h-[calc(100vh-10rem)] md:w-120 md:rounded-3xl md:pb-0"
+                className="absolute bottom-0 left-0 right-0 h-screen md:h-auto md:max-h-[calc(100vh-10rem)] overflow-y-auto rounded-t-3xl border-0 bg-white/95 shadow-2xl backdrop-blur-xl pb-[calc(env(safe-area-inset-bottom)+16px)] md:bottom-auto md:left-5 md:right-auto md:top-5 md:w-120 md:rounded-3xl md:pb-0 overscroll-contain"
                 style={{ zIndex: 1200 }}
               >
-                <CardHeader className="sticky top-0 z-10 border-b border-slate-100 bg-white/90 backdrop-blur-xl px-6 py-5">
+                <CardHeader className="sticky top-0 z-20 border-b border-slate-100 bg-white/90 backdrop-blur-xl px-6 py-5">
                   <div className="mx-auto mb-3 h-1.5 w-12 rounded-full bg-slate-200 md:hidden" />
                   <div className="flex items-start justify-between gap-4">
                     <div className="min-w-0 flex-1">

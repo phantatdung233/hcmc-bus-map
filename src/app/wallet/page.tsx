@@ -7,6 +7,7 @@ import { Wallet, PlusCircle, Ticket, History, ArrowDownLeft, ArrowUpRight, Clock
 
 import MvpNav from "@/components/mvp/MvpNav";
 import { getStoredUserId, mvpRequest } from "@/lib/mvp-client";
+import { useWalletBalance } from "@/hooks/useWalletBalance";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -22,7 +23,7 @@ type Transaction = {
 export default function WalletPage() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
-  const [balance, setBalance] = useState<number | null>(null);
+  const { balance, isLoading: balanceLoading } = useWalletBalance(userId || undefined);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [message, setMessage] = useState("Đang tải dữ liệu ví...");
 
@@ -42,17 +43,13 @@ export default function WalletPage() {
       return;
     }
 
-    Promise.all([
-      mvpRequest<{ balance: number }>("/api/wallet/balance", undefined, userId),
-      mvpRequest<{ items: Transaction[] }>("/api/wallet/transactions", undefined, userId),
-    ])
-      .then(([walletRes, txRes]) => {
-        setBalance(walletRes.balance);
+    mvpRequest<{ items: Transaction[] }>("/api/wallet/transactions", undefined, userId)
+      .then((txRes) => {
         setTransactions(txRes.items);
         setMessage("");
       })
       .catch((error) => {
-        setMessage(error instanceof Error ? error.message : "Không tải được dữ liệu vi");
+        setMessage(error instanceof Error ? error.message : "Không tải được dữ liệu ví");
       });
   }, [userId]);
 

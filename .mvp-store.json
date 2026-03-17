@@ -16,8 +16,8 @@
   "wallets": [
     {
       "userId": "usr_jng5yozs",
-      "balance": 341000,
-      "updatedAt": "2026-03-17T03:19:52.057Z"
+      "balance": 331000,
+      "updatedAt": "2026-03-17T15:40:00.526Z"
     },
     {
       "userId": "usr_zkzrtyww",
@@ -197,6 +197,35 @@
       "status": "success",
       "note": "Mua ve tuyen 1",
       "createdAt": "2026-03-17T03:19:52.057Z"
+    },
+    {
+      "id": "tx_c2mois46",
+      "userId": "usr_jng5yozs",
+      "type": "buy_ticket",
+      "amount": 10000,
+      "status": "success",
+      "note": "Mua ve tuyen 1",
+      "createdAt": "2026-03-17T15:40:00.526Z"
+    },
+    {
+      "id": "tx_d4a7a0f7",
+      "userId": "usr_jng5yozs",
+      "type": "topup",
+      "amount": 50000,
+      "status": "pending",
+      "providerOrderId": "topup_fvceksg7",
+      "note": "Cho xac nhan webhook",
+      "createdAt": "2026-03-17T15:40:41.673Z"
+    },
+    {
+      "id": "tx_1b0otlr5",
+      "userId": "usr_jng5yozs",
+      "type": "topup",
+      "amount": 50000,
+      "status": "pending",
+      "providerOrderId": "topup_sbvz4y7b",
+      "note": "Cho xac nhan webhook",
+      "createdAt": "2026-03-17T15:54:35.989Z"
     }
   ],
   "topupOrders": [
@@ -289,9 +318,36 @@
       "transactionId": "tx_7oml14ii",
       "paymentUrl": "/mock-payment?orderId=topup_qmh8czqj",
       "createdAt": "2026-03-17T03:19:40.329Z"
+    },
+    {
+      "id": "topup_fvceksg7",
+      "userId": "usr_jng5yozs",
+      "amount": 50000,
+      "status": "pending",
+      "transactionId": "tx_d4a7a0f7",
+      "paymentUrl": "/mock-payment?orderId=topup_fvceksg7",
+      "createdAt": "2026-03-17T15:40:41.673Z"
+    },
+    {
+      "id": "topup_sbvz4y7b",
+      "userId": "usr_jng5yozs",
+      "amount": 50000,
+      "status": "pending",
+      "transactionId": "tx_1b0otlr5",
+      "paymentUrl": "/mock-payment?orderId=topup_sbvz4y7b",
+      "createdAt": "2026-03-17T15:54:35.989Z"
     }
   ],
   "tickets": [
+    {
+      "id": "ticket_2olf7fz1",
+      "userId": "usr_jng5yozs",
+      "routeId": 1,
+      "ticketCode": "BUS-7PEW6V",
+      "price": 10000,
+      "status": "active",
+      "createdAt": "2026-03-17T15:40:00.526Z"
+    },
     {
       "id": "ticket_qmss6yjf",
       "userId": "usr_jng5yozs",
