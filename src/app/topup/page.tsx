@@ -38,7 +38,40 @@ export default function TopupPage() {
           const savedOrder = localStorage.getItem(`topup_order_${user.id}`);
           if (savedOrder) {
             try {
-              const parsedOrder = JSON.parse(savedOrder);
+              const parsedOrder = JSON.parse(savedOrder) as TopupOrder;
+
+              if (parsedOrder?.orderId && parsedOrder.status === "pending") {
+                mvpRequest<{ orderId: string; amount: number; status: "pending" | "success" | "failed" }>(
+                  `/api/payments/topup/${parsedOrder.orderId}/status`,
+                )
+                  .then((latestOrder) => {
+                    if (latestOrder.status === "success") {
+                      setOrder({
+                        orderId: latestOrder.orderId,
+                        amount: latestOrder.amount,
+                        status: "success",
+                        paymentUrl: "",
+                      });
+                      setMessage(
+                        `✓ Nạp tiền thành công! Đã cộng ${latestOrder.amount.toLocaleString("vi-VN")} đ vào tài khoản.`,
+                      );
+                      localStorage.removeItem(`topup_order_${user.id}`);
+                      return;
+                    }
+
+                    setOrder({
+                      ...parsedOrder,
+                      amount: latestOrder.amount,
+                      status: latestOrder.status,
+                    });
+                  })
+                  .catch(() => {
+                    setOrder(parsedOrder);
+                  });
+
+                return;
+              }
+
               setOrder(parsedOrder);
             } catch {
               // Ignore parse error
@@ -53,9 +86,16 @@ export default function TopupPage() {
 
   // Persist order to localStorage whenever it changes
   useEffect(() => {
-    if (typeof window !== "undefined" && userId && order) {
-      localStorage.setItem(`topup_order_${userId}`, JSON.stringify(order));
+    if (typeof window === "undefined" || !userId) {
+      return;
     }
+
+    if (order?.status === "pending") {
+      localStorage.setItem(`topup_order_${userId}`, JSON.stringify(order));
+      return;
+    }
+
+    localStorage.removeItem(`topup_order_${userId}`);
   }, [order, userId]);
 
   useEffect(() => {

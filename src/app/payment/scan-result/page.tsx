@@ -4,7 +4,7 @@ import { AlertTriangle, CheckCircle2, Clock3, ReceiptText, Wallet } from "lucide
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
-const formatVnd = (value: number) => `${value.toLocaleString("vi-VN")} d`;
+const formatVnd = (value: number) => `${value.toLocaleString("vi-VN")} đ`;
 
 type ResultConfig = {
   title: string;
@@ -16,23 +16,23 @@ type ResultConfig = {
 
 const RESULT_MAP: Record<string, ResultConfig> = {
   success: {
-    title: "Thanh toan thanh cong",
-    description: "He thong da ghi nhan giao dich va cap nhat so du vi.",
-    badge: "Success",
+    title: "Thanh toán thành công",
+    description: "Hệ thống đã ghi nhận giao dịch và cập nhật số dư ví.",
+    badge: "Thành công",
     badgeClassName: "bg-emerald-100 text-emerald-700 border border-emerald-200",
     icon: "success",
   },
   already_paid: {
-    title: "Don hang da duoc thanh toan",
-    description: "Ban da quet thanh toan truoc do. Khong co giao dich nao bi tru trung.",
-    badge: "Already Paid",
+    title: "Đơn hàng đã được thanh toán",
+    description: "Bạn đã quét thanh toán trước đó. Không có giao dịch nào bị trừ trùng.",
+    badge: "Đã thanh toán",
     badgeClassName: "bg-sky-100 text-sky-700 border border-sky-200",
     icon: "info",
   },
   error: {
-    title: "Thanh toan that bai",
-    description: "Khong the xu ly giao dich luc nay. Vui long thu lai sau.",
-    badge: "Failed",
+    title: "Thanh toán thất bại",
+    description: "Không thể xử lý giao dịch lúc này. Vui lòng thử lại sau.",
+    badge: "Thất bại",
     badgeClassName: "bg-rose-100 text-rose-700 border border-rose-200",
     icon: "error",
   },
@@ -71,7 +71,7 @@ export default async function PaymentScanResultPage({ searchParams }: PageProps)
   const messageRaw = readValue(params.message);
 
   const config = RESULT_MAP[status] || RESULT_MAP.error;
-  const amountLabel = amountRaw > 0 ? formatVnd(amountRaw) : "Khong co";
+  const amountLabel = amountRaw > 0 ? formatVnd(amountRaw) : "Không có";
 
   const message = messageRaw.trim() ? messageRaw : config.description;
 
@@ -87,7 +87,7 @@ export default async function PaymentScanResultPage({ searchParams }: PageProps)
                 </div>
                 <div>
                   <CardTitle className="text-2xl text-slate-800">{config.title}</CardTitle>
-                  <CardDescription className="mt-1 text-slate-600">Ket qua sau khi quet QR thanh toan</CardDescription>
+                  <CardDescription className="mt-1 text-slate-600">Kết quả sau khi quét QR thanh toán</CardDescription>
                 </div>
               </div>
               <span className={`rounded-full px-3 py-1 text-xs font-semibold tracking-wide ${config.badgeClassName}`}>
@@ -103,11 +103,11 @@ export default async function PaymentScanResultPage({ searchParams }: PageProps)
 
             <div className="grid gap-3 md:grid-cols-2">
               <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Ma don hang</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Mã đơn hàng</p>
                 <p className="mt-1 font-mono text-sm text-slate-800">{orderId}</p>
               </div>
               <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">So tien</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Số tiền</p>
                 <p className="mt-1 text-sm font-semibold text-slate-800">{amountLabel}</p>
               </div>
             </div>
@@ -115,7 +115,7 @@ export default async function PaymentScanResultPage({ searchParams }: PageProps)
             <div className="grid gap-3 sm:grid-cols-3">
               <Button asChild className="h-11 rounded-xl bg-[#2f5a46] hover:bg-[#1f4231]">
                 <Link href="/wallet">
-                  <Wallet className="mr-2 h-4 w-4" /> Ve vi
+                  <Wallet className="mr-2 h-4 w-4" /> Về ví
                 </Link>
               </Button>
 
@@ -125,12 +125,12 @@ export default async function PaymentScanResultPage({ searchParams }: PageProps)
                 className="h-11 rounded-xl border-[#d6e4dc] text-[#2f5a46] hover:bg-[#f0f7f4]"
               >
                 <Link href="/topup">
-                  <ReceiptText className="mr-2 h-4 w-4" /> Tao lenh moi
+                  <ReceiptText className="mr-2 h-4 w-4" /> Tạo lệnh mới
                 </Link>
               </Button>
 
               <Button asChild variant="outline" className="h-11 rounded-xl border-slate-200">
-                <Link href="/">Ve ban do</Link>
+                <Link href="/">Về bản đồ</Link>
               </Button>
             </div>
           </CardContent>
