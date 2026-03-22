@@ -2,10 +2,9 @@ export type TransactionType = "topup" | "buy_ticket";
 export type TransactionStatus = "pending" | "success" | "failed";
 export type TicketStatus = "active" | "used" | "expired";
 
-export type MvpUser = {
+export type UserProfile = {
   id: string;
   email: string;
-  password: string;
   createdAt: string;
 };
 

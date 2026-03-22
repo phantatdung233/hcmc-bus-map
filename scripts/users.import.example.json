@@ -1,0 +1,12 @@
+[
+  {
+    "email": "alice@example.com",
+    "password": "aliceStrongPass123",
+    "balance": 100000
+  },
+  {
+    "email": "bob@example.com",
+    "password": "bobStrongPass456",
+    "balance": 50000
+  }
+]

@@ -1,24 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { buyBusTicket, getTicketsByUser } from "@/lib/mvp-store";
+import { getAuthenticatedUserId } from "@/lib/server-auth";
+import { buyBusTicket, getTicketsByUser } from "@/lib/user-store";
 
 export async function GET(request: NextRequest) {
-  const userId = request.headers.get("x-user-id");
+  const userId = getAuthenticatedUserId(request);
 
   if (!userId) {
-    return NextResponse.json({ message: "Thieu x-user-id" }, { status: 401 });
+    return NextResponse.json({ message: "Chua dang nhap" }, { status: 401 });
   }
 
   return NextResponse.json({
-    items: getTicketsByUser(userId),
+    items: await getTicketsByUser(userId),
   });
 }
 
 export async function POST(request: NextRequest) {
-  const userId = request.headers.get("x-user-id");
+  const userId = getAuthenticatedUserId(request);
 
   if (!userId) {
-    return NextResponse.json({ message: "Thieu x-user-id" }, { status: 401 });
+    return NextResponse.json({ message: "Chua dang nhap" }, { status: 401 });
   }
 
   const body = await request.json().catch(() => null);
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const ticket = buyBusTicket(userId, Math.round(routeId), Math.round(price));
+    const ticket = await buyBusTicket(userId, Math.round(routeId), Math.round(price));
 
     return NextResponse.json({
       ticket,

@@ -5,24 +5,27 @@ import { useRouter } from "next/navigation";
 import { UserPlus, LogIn, ArrowRight } from "lucide-react";
 
 import MvpNav from "@/components/mvp/MvpNav";
-import { getStoredUserId, mvpRequest, setStoredUserId } from "@/lib/mvp-client";
+import { getCurrentUser, mvpRequest } from "@/lib/mvp-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 export default function AccountPage() {
   const router = useRouter();
-  const [email, setEmail] = useState("demo@bus.local");
-  const [password, setPassword] = useState("123456");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [message, setMessage] = useState("Đăng nhập hoặc tạo tài khoản để sử dụng ví thanh toán.");
-  const [userId, setUserId] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    const stored = getStoredUserId();
-    if (stored) {
-      setUserId(stored);
-      router.push("/wallet");
-    }
+    getCurrentUser()
+      .then(() => {
+        setIsAuthenticated(true);
+        router.push("/wallet");
+      })
+      .catch(() => {
+        setIsAuthenticated(false);
+      });
   }, [router]);
 
   const onLogin = async (event: FormEvent) => {
@@ -35,8 +38,7 @@ export default function AccountPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      setStoredUserId(result.userId);
-      setUserId(result.userId);
+      setIsAuthenticated(true);
       setMessage(`Đăng nhập thành công: ${result.email}`);
       router.push("/wallet");
     } catch (error) {
@@ -113,7 +115,7 @@ export default function AccountPage() {
                 </Button>
               </div>
 
-              {userId && (
+              {isAuthenticated && (
                 <Button
                   variant="ghost"
                   className="rounded-xl text-[#2f5a46] hover:bg-[#2f5a46]/10"

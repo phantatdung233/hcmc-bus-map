@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getTransactionsByUser } from "@/lib/mvp-store";
+import { getAuthenticatedUserId } from "@/lib/server-auth";
+import { getTransactionsByUser } from "@/lib/user-store";
 
 export async function GET(request: NextRequest) {
-  const userId = request.headers.get("x-user-id");
+  const userId = getAuthenticatedUserId(request);
 
   if (!userId) {
-    return NextResponse.json({ message: "Thieu x-user-id" }, { status: 401 });
+    return NextResponse.json({ message: "Chua dang nhap" }, { status: 401 });
   }
 
   return NextResponse.json({
-    items: getTransactionsByUser(userId),
+    items: await getTransactionsByUser(userId),
   });
 }

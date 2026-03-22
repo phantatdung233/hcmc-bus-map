@@ -1,16 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { getTopupOrderById } from "@/lib/mvp-store";
+import { getAuthenticatedUserId } from "@/lib/server-auth";
+import { getTopupOrderById } from "@/lib/user-store";
 
-export async function GET(
-  _request: NextRequest,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
+  const userId = getAuthenticatedUserId(request);
+  if (!userId) {
+    return NextResponse.json({ message: "Chua dang nhap" }, { status: 401 });
+  }
+
   const params = await context.params;
-  const order = getTopupOrderById(params.id);
+  const order = await getTopupOrderById(params.id);
 
   if (!order) {
     return NextResponse.json({ message: "Khong tim thay order" }, { status: 404 });
+  }
+
+  if (order.userId !== userId) {
+    return NextResponse.json({ message: "Khong co quyen truy cap order nay" }, { status: 403 });
   }
 
   return NextResponse.json({

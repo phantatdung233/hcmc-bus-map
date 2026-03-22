@@ -6,7 +6,11 @@
     "dev": "next dev --webpack",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "qa:api": "node scripts/qa-api-test.mjs",
+    "db:import": "node scripts/import-mongodb.mjs",
+    "db:import-users": "node scripts/import-users.mjs",
+    "db:cleanup-mvp": "node scripts/cleanup-mvp.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
@@ -14,6 +18,7 @@
     "clsx": "^2.1.1",
     "leaflet": "^1.9.4",
     "lucide-react": "^0.577.0",
+    "mongodb": "^7.1.0",
     "next": "16.1.6",
     "qrcode.react": "^4.2.0",
     "react": "19.2.3",

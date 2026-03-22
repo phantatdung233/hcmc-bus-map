@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { loginUser } from "@/lib/mvp-store";
+import { createSessionToken, SESSION_COOKIE_NAME } from "@/lib/session";
+import { loginUser } from "@/lib/user-store";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
@@ -12,13 +13,23 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const user = loginUser(email, password);
+    const user = await loginUser(email, password);
+    const token = createSessionToken(user.id);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       userId: user.id,
       email: user.email,
-      note: "MVP: Gui userId qua header x-user-id cho cac API can dang nhap",
     });
+
+    response.cookies.set(SESSION_COOKIE_NAME, token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
+    return response;
   } catch {
     return NextResponse.json({ message: "Sai thong tin dang nhap" }, { status: 401 });
   }

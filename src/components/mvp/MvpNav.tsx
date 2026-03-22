@@ -3,9 +3,9 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { LogOut, Map, ArrowLeft, Ticket, Wallet, PlusCircle, UserCircle, History } from "lucide-react";
+import { LogOut, ArrowLeft, Ticket, Wallet, PlusCircle, UserCircle, History } from "lucide-react";
 
-import { clearStoredUserId, getStoredUserId } from "@/lib/mvp-client";
+import { getCurrentUser, logout } from "@/lib/mvp-client";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -16,10 +16,12 @@ type MvpNavProps = {
 export default function MvpNav({ title }: MvpNavProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [userId, setUserId] = useState<string | null>(null);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    setUserId(getStoredUserId());
+    getCurrentUser()
+      .then((user) => setUserEmail(user.email))
+      .catch(() => setUserEmail(null));
   }, [pathname]);
 
   const navLinks = [
@@ -43,17 +45,17 @@ export default function MvpNav({ title }: MvpNavProps) {
             </Link>
           </div>
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{title}</h1>
-          {userId !== null && (
+          {userEmail !== null && (
             <p className="text-sm text-slate-500 mt-1">
-              ID Người dùng: <span className="font-medium text-slate-700">{userId || "(Chưa đăng nhập)"}</span>
+              Tài khoản: <span className="font-medium text-slate-700">{userEmail}</span>
             </p>
           )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {navLinks.map((link) => {
-            if (!userId && link.href !== "/account") return null;
-            if (userId && link.href === "/account") return null;
+            if (!userEmail && link.href !== "/account") return null;
+            if (userEmail && link.href === "/account") return null;
 
             const isActive = pathname === link.href;
             const Icon = link.icon;
@@ -77,13 +79,13 @@ export default function MvpNav({ title }: MvpNavProps) {
             );
           })}
 
-          {userId && (
+          {userEmail && (
             <Button
               variant="outline"
               size="sm"
               className="rounded-xl gap-2 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 hover:text-red-700 hover:border-red-300"
-              onClick={() => {
-                clearStoredUserId();
+              onClick={async () => {
+                await logout().catch(() => undefined);
                 router.push("/account");
                 router.refresh();
               }}

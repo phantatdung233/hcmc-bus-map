@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { createUser } from "@/lib/mvp-store";
+import { createUser } from "@/lib/user-store";
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
@@ -11,8 +11,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "email va password la bat buoc" }, { status: 400 });
   }
 
+  if (password.length < 8) {
+    return NextResponse.json({ message: "Mat khau toi thieu 8 ky tu" }, { status: 400 });
+  }
+
   try {
-    const user = createUser(email, password);
+    const user = await createUser(email, password);
 
     return NextResponse.json({
       id: user.id,

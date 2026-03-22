@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Wallet, PlusCircle, Ticket, History, ArrowDownLeft, ArrowUpRight, ClockAlert } from "lucide-react";
 
 import MvpNav from "@/components/mvp/MvpNav";
-import { getStoredUserId, mvpRequest } from "@/lib/mvp-client";
+import { getCurrentUser, mvpRequest } from "@/lib/mvp-client";
 import { useWalletBalance } from "@/hooks/useWalletBalance";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,19 +23,18 @@ type Transaction = {
 export default function WalletPage() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
-  const { balance, isLoading: balanceLoading } = useWalletBalance(userId || undefined);
+  const { balance } = useWalletBalance(Boolean(userId), userId || "anonymous");
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [message, setMessage] = useState("Đang tải dữ liệu ví...");
 
   useEffect(() => {
-    const stored = getStoredUserId();
-
-    if (!stored) {
-      router.push("/account");
-      return;
-    }
-
-    setUserId(stored);
+    getCurrentUser()
+      .then((user) => {
+        setUserId(user.id);
+      })
+      .catch(() => {
+        router.push("/account");
+      });
   }, [router]);
 
   useEffect(() => {
@@ -43,7 +42,7 @@ export default function WalletPage() {
       return;
     }
 
-    mvpRequest<{ items: Transaction[] }>("/api/wallet/transactions", undefined, userId)
+    mvpRequest<{ items: Transaction[] }>("/api/wallet/transactions")
       .then((txRes) => {
         setTransactions(txRes.items);
         setMessage("");

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
-import { createTopupOrder } from "@/lib/mvp-store";
+import { getAuthenticatedUserId } from "@/lib/server-auth";
+import { createTopupOrder } from "@/lib/user-store";
 
 export async function POST(request: NextRequest) {
-  const userId = request.headers.get("x-user-id");
+  const userId = getAuthenticatedUserId(request);
 
   if (!userId) {
-    return NextResponse.json({ message: "Thieu x-user-id" }, { status: 401 });
+    return NextResponse.json({ message: "Chua dang nhap" }, { status: 401 });
   }
 
   const body = await request.json().catch(() => null);
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "amount khong hop le" }, { status: 400 });
   }
 
-  const order = createTopupOrder(userId, Math.round(amount));
+  const order = await createTopupOrder(userId, Math.round(amount));
 
   return NextResponse.json({
     orderId: order.id,

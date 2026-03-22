@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Ticket, History, QrCode, Bus, Calendar, Clock, CreditCard } from "lucide-react";
+import { Ticket, QrCode, Bus, Calendar, Clock, CreditCard } from "lucide-react";
 
 import MvpNav from "@/components/mvp/MvpNav";
-import { getStoredUserId, mvpRequest } from "@/lib/mvp-client";
+import { getCurrentUser, mvpRequest } from "@/lib/mvp-client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
@@ -25,13 +25,13 @@ export default function MyTicketsPage() {
   const [message, setMessage] = useState("Đang tải danh sách vé...");
 
   useEffect(() => {
-    const stored = getStoredUserId();
-    if (!stored) {
-      router.push("/account");
-      return;
-    }
-
-    setUserId(stored);
+    getCurrentUser()
+      .then((user) => {
+        setUserId(user.id);
+      })
+      .catch(() => {
+        router.push("/account");
+      });
   }, [router]);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export default function MyTicketsPage() {
       return;
     }
 
-    mvpRequest<{ items: TicketInfo[] }>("/api/tickets/buy", undefined, userId)
+    mvpRequest<{ items: TicketInfo[] }>("/api/tickets/my")
       .then((res) => {
         setTickets(res.items);
         setMessage("");

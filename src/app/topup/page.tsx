@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { PlusCircle, QrCode, CheckCircle2, ArrowRight, Wallet, Download } from "lucide-react";
+import { QrCode, CheckCircle2, ArrowRight, Wallet, Download } from "lucide-react";
 import { QRCodeCanvas } from "qrcode.react";
 
 import MvpNav from "@/components/mvp/MvpNav";
-import { getStoredUserId, mvpRequest } from "@/lib/mvp-client";
+import { getCurrentUser, mvpRequest } from "@/lib/mvp-client";
 import { useWalletBalance } from "@/hooks/useWalletBalance";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -24,32 +24,31 @@ export default function TopupPage() {
   const router = useRouter();
   const [userId, setUserId] = useState("");
   const [amount, setAmount] = useState(50000);
-  const { balance, isLoading: balanceLoading, refetch: refetchBalance } = useWalletBalance(userId || undefined);
+  const { balance, refetch: refetchBalance } = useWalletBalance(Boolean(userId), userId || "anonymous");
   const [order, setOrder] = useState<TopupOrder | null>(null);
   const [message, setMessage] = useState("Tạo lệnh nạp tiền để hiển thị QR thanh toán.");
   const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const stored = getStoredUserId();
-    if (!stored) {
-      router.push("/account");
-      return;
-    }
+    getCurrentUser()
+      .then((user) => {
+        setUserId(user.id);
 
-    setUserId(stored);
-
-    // Load persisted order from localStorage
-    if (typeof window !== "undefined") {
-      const savedOrder = localStorage.getItem(`topup_order_${stored}`);
-      if (savedOrder) {
-        try {
-          const parsedOrder = JSON.parse(savedOrder);
-          setOrder(parsedOrder);
-        } catch {
-          // Ignore parse error
+        if (typeof window !== "undefined") {
+          const savedOrder = localStorage.getItem(`topup_order_${user.id}`);
+          if (savedOrder) {
+            try {
+              const parsedOrder = JSON.parse(savedOrder);
+              setOrder(parsedOrder);
+            } catch {
+              // Ignore parse error
+            }
+          }
         }
-      }
-    }
+      })
+      .catch(() => {
+        router.push("/account");
+      });
   }, [router]);
 
   // Persist order to localStorage whenever it changes
@@ -67,26 +66,27 @@ export default function TopupPage() {
       const amount = params.get("amount");
 
       if (status === "success" && orderId && amount) {
-        setMessage(`✓ Nạp tiền thành công! Đã cộng ${parseInt(amount).toLocaleString("vi-VN")} đ vào tài khoản.`);
-        setOrder({
-          orderId,
-          amount: parseInt(amount),
-          status: "success",
-          paymentUrl: "",
+        const amountValue = parseInt(amount, 10);
+
+        queueMicrotask(() => {
+          setMessage(`✓ Nạp tiền thành công! Đã cộng ${amountValue.toLocaleString("vi-VN")} đ vào tài khoản.`);
+          setOrder({
+            orderId,
+            amount: amountValue,
+            status: "success",
+            paymentUrl: "",
+          });
         });
-        // Refresh balance
+
         if (userId) {
           refetchBalance();
+          localStorage.removeItem(`topup_order_${userId}`);
         }
-        // Clear persisted order from localStorage
-        localStorage.removeItem(`topup_order_${userId}`);
-        // Clear URL parameters
+
         window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
-  }, [userId]);
-
-  const canConfirm = useMemo(() => Boolean(order && order.status === "pending"), [order]);
+  }, [userId, refetchBalance]);
 
   const createOrder = async () => {
     if (!userId) {
@@ -96,16 +96,12 @@ export default function TopupPage() {
     setMessage("Đang tạo lệnh nạp tiền...");
 
     try {
-      const result = await mvpRequest<TopupOrder>(
-        "/api/payments/topup/create",
-        {
-          method: "POST",
-          body: JSON.stringify({ amount }),
-        },
-        userId,
-      );
+      const result = await mvpRequest<TopupOrder>("/api/payments/topup/create", {
+        method: "POST",
+        body: JSON.stringify({ amount }),
+      });
 
-      const confirmUrl = `${window.location.origin}/api/payments/topup/confirm?orderId=${result.orderId}&userId=${userId}`;
+      const confirmUrl = `${window.location.origin}/api/payments/topup/confirm?orderId=${result.orderId}`;
 
       setOrder({
         ...result,

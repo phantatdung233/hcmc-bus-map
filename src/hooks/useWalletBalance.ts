@@ -5,12 +5,12 @@ const BALANCE_CACHE_KEY = "busmap.wallet.balance";
 const BALANCE_CACHE_TIME = 30000; // 30 seconds
 
 type CachedBalance = {
-  userId: string;
+  cacheKey: string;
   balance: number;
   timestamp: number;
 };
 
-const getCachedBalance = (userId: string): number | null => {
+const getCachedBalance = (cacheKey: string): number | null => {
   if (typeof window === "undefined") return null;
 
   try {
@@ -20,7 +20,7 @@ const getCachedBalance = (userId: string): number | null => {
     const data: CachedBalance = JSON.parse(cached);
 
     // Check if cache is still valid
-    if (data.userId !== userId) return null;
+    if (data.cacheKey !== cacheKey) return null;
     if (Date.now() - data.timestamp > BALANCE_CACHE_TIME) return null;
 
     return data.balance;
@@ -29,12 +29,12 @@ const getCachedBalance = (userId: string): number | null => {
   }
 };
 
-const setCachedBalance = (userId: string, balance: number) => {
+const setCachedBalance = (cacheKey: string, balance: number) => {
   if (typeof window === "undefined") return;
 
   try {
     const data: CachedBalance = {
-      userId,
+      cacheKey,
       balance,
       timestamp: Date.now(),
     };
@@ -44,20 +44,20 @@ const setCachedBalance = (userId: string, balance: number) => {
   }
 };
 
-export const useWalletBalance = (userId: string | undefined) => {
+export const useWalletBalance = (enabled = true, cacheKey = "default") => {
   const [balance, setBalance] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!userId) {
+    if (!enabled) {
       setBalance(null);
       setIsLoading(false);
       return;
     }
 
     // 1. Try to use cached balance first
-    const cachedBalance = getCachedBalance(userId);
+    const cachedBalance = getCachedBalance(cacheKey);
     if (cachedBalance !== null) {
       setBalance(cachedBalance);
       setIsLoading(false);
@@ -69,14 +69,14 @@ export const useWalletBalance = (userId: string | undefined) => {
     // 2. Fetch fresh balance in background
     const fetchBalance = async () => {
       try {
-        const result = await mvpRequest<{ balance: number }>("/api/wallet/balance", undefined, userId);
+        const result = await mvpRequest<{ balance: number }>("/api/wallet/balance");
 
         setBalance(result.balance);
-        setCachedBalance(userId, result.balance);
+        setCachedBalance(cacheKey, result.balance);
         setError(null);
       } catch (err) {
         // If fetch fails, fallback to cached value
-        const fallbackBalance = getCachedBalance(userId);
+        const fallbackBalance = getCachedBalance(cacheKey);
         if (fallbackBalance !== null) {
           setBalance(fallbackBalance);
         } else {
@@ -88,17 +88,17 @@ export const useWalletBalance = (userId: string | undefined) => {
     };
 
     fetchBalance();
-  }, [userId]);
+  }, [enabled, cacheKey]);
 
   const refetch = async () => {
-    if (!userId) return;
+    if (!enabled) return;
 
     setIsLoading(true);
     try {
-      const result = await mvpRequest<{ balance: number }>("/api/wallet/balance", undefined, userId);
+      const result = await mvpRequest<{ balance: number }>("/api/wallet/balance");
 
       setBalance(result.balance);
-      setCachedBalance(userId, result.balance);
+      setCachedBalance(cacheKey, result.balance);
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Lỗi tải số dư");

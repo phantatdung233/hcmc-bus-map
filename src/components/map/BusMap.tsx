@@ -3,12 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap, useMapEvents } from "react-leaflet";
 import L from "leaflet";
-import { Bus, ChevronDown, ChevronUp, Clock3, LocateFixed, Minus, Plus, Search, Star, X, Wallet } from "lucide-react";
+import { Bus, ChevronDown, ChevronUp, Clock3, LocateFixed, Minus, Plus, Search, Star, Ticket, X, Wallet } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getStoredUserId, mvpRequest } from "@/lib/mvp-client";
+import { getCurrentUser, mvpRequest } from "@/lib/mvp-client";
 import { Input } from "@/components/ui/input";
 import routeInfoJson from "@/data/routeinfo.json";
 import stationsJson from "@/data/stations.json";
@@ -436,22 +436,53 @@ export default function BusMap() {
   const hasRequestedLocation = useRef(false);
 
   const [isWalletOpen, setIsWalletOpen] = useState(false);
-  const [walletUserId, setWalletUserId] = useState<string | null>(null);
+  const [walletUserEmail, setWalletUserEmail] = useState<string | null>(null);
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
 
   useEffect(() => {
+    getCurrentUser()
+      .then((user) => {
+        setWalletUserEmail(user.email);
+      })
+      .catch(() => {
+        setWalletUserEmail(null);
+      });
+  }, []);
+
+  useEffect(() => {
     if (isWalletOpen) {
-      const uid = getStoredUserId();
-      setWalletUserId(uid);
-      if (uid) {
-        mvpRequest<{ balance: number }>("/api/wallet/balance", undefined, uid)
-          .then((res) => setWalletBalance(res.balance))
-          .catch(() => setWalletBalance(null));
-      } else {
-        setWalletBalance(null);
-      }
+      getCurrentUser()
+        .then((user) => {
+          setWalletUserEmail(user.email);
+          return mvpRequest<{ balance: number }>("/api/wallet/balance");
+        })
+        .then((res) => setWalletBalance(res.balance))
+        .catch(() => {
+          setWalletUserEmail(null);
+          setWalletBalance(null);
+        });
     }
   }, [isWalletOpen]);
+
+  const getTicketPriceFromRoute = (normalTicket?: string | null): number => {
+    const digits = (normalTicket ?? "").replace(/\D/g, "");
+    const parsed = Number(digits);
+
+    if (Number.isFinite(parsed) && parsed > 0) {
+      return parsed;
+    }
+
+    return 7000;
+  };
+
+  const navigateToBuyTicket = (route: StationRouteView) => {
+    const params = new URLSearchParams({
+      routeId: String(route.routeId),
+      price: String(getTicketPriceFromRoute(route.normalTicket)),
+    });
+
+    window.location.href = `/buy-ticket?${params.toString()}`;
+  };
 
   const requestUserLocation = (shouldFly = false) => {
     if (!navigator.geolocation) {
@@ -916,11 +947,11 @@ export default function BusMap() {
               : "opacity-0 scale-95 -translate-y-2 invisible pointer-events-none",
           )}
         >
-          {walletUserId ? (
+          {walletUserEmail ? (
             <>
               <CardHeader className="bg-[#2f5a46]/5 pb-3">
                 <CardTitle className="text-sm font-semibold text-slate-800">Ví thanh toán</CardTitle>
-                <CardDescription className="text-xs">ID: {walletUserId}</CardDescription>
+                <CardDescription className="text-xs">Email: {walletUserEmail}</CardDescription>
               </CardHeader>
               <CardContent className="p-4 pt-3 flex flex-col gap-3">
                 <div>
@@ -1487,6 +1518,48 @@ export default function BusMap() {
             </CardHeader>
 
             <CardContent className="space-y-3 p-4 md:p-6 bg-slate-50/50">
+              {walletUserEmail ? (
+                <Card className="rounded-2xl border-[#d6e4dc] bg-[#2f5a46]/5 shadow-xs">
+                  <CardContent className="p-4">
+                    <div className="mb-3 flex items-center justify-between gap-2">
+                      <p className="text-sm font-bold text-[#2f5a46]">Mua vé nhanh tại trạm này</p>
+                      <span className="text-xs font-medium text-slate-500">{routesAtStation.length} tuyến</span>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {routesAtStation.map((route) => (
+                        <Button
+                          key={`station-buy-${route.routeId}`}
+                          size="sm"
+                          className="rounded-xl bg-[#2f5a46] hover:bg-[#1f4231] text-white"
+                          onClick={() => navigateToBuyTicket(route)}
+                          type="button"
+                        >
+                          <Ticket className="mr-1.5 h-4 w-4" /> Tuyến {route.routeNo}
+                        </Button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card className="rounded-2xl border-dashed border-slate-200 bg-white/70 shadow-xs">
+                  <CardContent className="p-4 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-700">Đăng nhập để mua vé nhanh</p>
+                      <p className="text-xs text-slate-500 mt-1">Bạn có thể mua vé trực tiếp từ thông tin trạm.</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="rounded-xl border-[#2f5a46] text-[#2f5a46] hover:bg-[#f7f5ef]"
+                      onClick={() => (window.location.href = "/account")}
+                      type="button"
+                    >
+                      Đăng nhập
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
+
               {routesAtStation.length === 0 ? (
                 <div className="rounded-2xl border-2 border-dashed border-slate-200 p-8 text-center">
                   <p className="text-[15px] font-medium text-slate-500">Không có dữ liệu tuyến.</p>
@@ -1591,7 +1664,7 @@ export default function BusMap() {
                 type="button"
               />
               <Card
-                className="absolute bottom-0 left-0 right-0 h-screen md:h-auto md:max-h-[calc(100vh-10rem)] overflow-y-auto rounded-t-3xl border-0 bg-white/95 shadow-2xl backdrop-blur-xl pb-[calc(env(safe-area-inset-bottom)+16px)] md:bottom-auto md:left-5 md:right-auto md:top-5 md:w-120 md:rounded-3xl md:pb-0 overscroll-contain"
+                className="absolute bottom-0 left-0 right-0 h-screen md:h-auto md:max-h-[calc(100vh-2.5rem)] overflow-y-auto rounded-t-3xl border-0 bg-white/95 shadow-2xl backdrop-blur-xl pb-[calc(env(safe-area-inset-bottom)+16px)] md:bottom-auto md:left-5 md:right-auto md:top-5 md:w-120 md:rounded-3xl md:pb-0 overscroll-contain"
                 style={{ zIndex: 1200 }}
               >
                 <CardHeader className="sticky top-0 z-20 border-b border-slate-100 bg-white/90 backdrop-blur-xl px-6 py-5">

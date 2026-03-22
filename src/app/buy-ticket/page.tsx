@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Ticket, Bus, QrCode, Wallet } from "lucide-react";
 
 import MvpNav from "@/components/mvp/MvpNav";
-import { getStoredUserId, mvpRequest } from "@/lib/mvp-client";
+import { getCurrentUser, mvpRequest } from "@/lib/mvp-client";
 import { useWalletBalance } from "@/hooks/useWalletBalance";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -26,19 +26,37 @@ export default function BuyTicketPage() {
   const [userId, setUserId] = useState("");
   const [routeId, setRouteId] = useState(1);
   const [price, setPrice] = useState(7000);
-  const { balance, refetch: refetchBalance } = useWalletBalance(userId || undefined);
+  const { balance, refetch: refetchBalance } = useWalletBalance(Boolean(userId), userId || "anonymous");
   const [message, setMessage] = useState("Chọn tuyến và thanh toán vé bằng số dư ví.");
   const [lastTicket, setLastTicket] = useState<TicketInfo | null>(null);
 
   useEffect(() => {
-    const stored = getStoredUserId();
-    if (!stored) {
-      router.push("/account");
+    getCurrentUser()
+      .then((user) => {
+        setUserId(user.id);
+      })
+      .catch(() => {
+        router.push("/account");
+      });
+  }, [router]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
       return;
     }
 
-    setUserId(stored);
-  }, [router]);
+    const params = new URLSearchParams(window.location.search);
+    const routeIdParam = Number(params.get("routeId") ?? "");
+    const priceParam = Number(params.get("price") ?? "");
+
+    if (Number.isFinite(routeIdParam) && routeIdParam > 0) {
+      setRouteId(Math.round(routeIdParam));
+    }
+
+    if (Number.isFinite(priceParam) && priceParam > 0) {
+      setPrice(Math.round(priceParam));
+    }
+  }, []);
 
   const onBuy = async () => {
     if (!userId) {
@@ -48,14 +66,10 @@ export default function BuyTicketPage() {
     setMessage("Đang xử lý giao dịch mùa vé...");
 
     try {
-      const result = await mvpRequest<{ ticket: TicketInfo }>(
-        "/api/tickets/buy",
-        {
-          method: "POST",
-          body: JSON.stringify({ routeId, price }),
-        },
-        userId,
-      );
+      const result = await mvpRequest<{ ticket: TicketInfo }>("/api/tickets/buy", {
+        method: "POST",
+        body: JSON.stringify({ routeId, price }),
+      });
 
       setLastTicket(result.ticket);
       await refetchBalance();
